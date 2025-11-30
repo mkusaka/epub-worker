@@ -1,5 +1,3 @@
-type Status = "pending" | "fulfilled" | "rejected";
-
 type PendingResult = {
   status: "pending";
   promise: Promise<void>;

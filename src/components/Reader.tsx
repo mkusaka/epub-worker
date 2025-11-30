@@ -140,15 +140,25 @@ const lightReaderStyles: IReactReaderStyle = {
   tocButtonBarTop: {
     top: "35%",
   },
-  tocButtonBarBottom: {
+  tocButtonBottom: {
     top: "65%",
   },
+  toc: {},
   loadingView: {
     position: "absolute",
     top: "50%",
     left: "10%",
     right: "10%",
     color: "#666666",
+    textAlign: "center",
+    marginTop: -20,
+  },
+  errorView: {
+    position: "absolute",
+    top: "50%",
+    left: "10%",
+    right: "10%",
+    color: "#cc0000",
     textAlign: "center",
     marginTop: -20,
   },

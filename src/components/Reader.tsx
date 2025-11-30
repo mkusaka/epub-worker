@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { ReactReader, type IReactReaderStyle } from "react-reader";
-import { useTheme } from "@/hooks/useTheme";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rendition = any;
@@ -204,10 +204,7 @@ export function Reader({
     initialLocation ?? null
   );
   const [rendition, setRendition] = useState<Rendition | null>(null);
-  const { theme } = useTheme();
-
-  const isDark = theme === "dark" ||
-    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const { isDark } = useTheme();
 
   const readerStyles = useMemo(() => isDark ? darkReaderStyles : lightReaderStyles, [isDark]);
 
@@ -248,6 +245,7 @@ export function Reader({
   return (
     <div className="h-full w-full">
       <ReactReader
+        key={`${bookId}-${isDark ? "dark" : "light"}`}
         url={bookData}
         location={location}
         locationChanged={handleLocationChange}

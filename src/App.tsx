@@ -9,6 +9,7 @@ import { Reader } from "@/components/Reader";
 import { Library } from "@/components/Library";
 import { FileUpload } from "@/components/FileUpload";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { FlowModeToggle } from "@/components/FlowModeToggle";
 import {
   Sidebar,
   SidebarContent,
@@ -233,6 +234,7 @@ function AppLayout({ bookId }: { bookId?: string }) {
             <span className="font-medium truncate flex-1">
               {activeItem?.title || "Select a book to read"}
             </span>
+            <FlowModeToggle />
             <ThemeToggle />
           </header>
 

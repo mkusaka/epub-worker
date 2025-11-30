@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ReactReader, type IReactReaderStyle } from "react-reader";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useReaderSettings } from "@/contexts/ReaderSettingsContext";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rendition = any;
@@ -214,8 +215,22 @@ export function Reader({
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
+  const { flowMode } = useReaderSettings();
 
-  const readerStyles = useMemo(() => (isDark ? darkReaderStyles : lightReaderStyles), [isDark]);
+  const readerStyles = useMemo(() => {
+    const baseStyles = isDark ? darkReaderStyles : lightReaderStyles;
+    // Hide navigation arrows in scrolled mode
+    if (flowMode === "scrolled") {
+      return {
+        ...baseStyles,
+        arrow: {
+          ...baseStyles.arrow,
+          display: "none",
+        },
+      };
+    }
+    return baseStyles;
+  }, [isDark, flowMode]);
 
   // Handle container resize (e.g., sidebar toggle)
   useEffect(() => {
@@ -277,26 +292,46 @@ export function Reader({
     }
   };
 
-  const handleRendition = useCallback((rendition: Rendition) => {
-    setRendition(rendition);
+  const handleRendition = useCallback(
+    (rendition: Rendition) => {
+      setRendition(rendition);
 
-    // Generate locations for progress calculation
-    rendition.book.ready.then(() => {
-      return rendition.book.locations.generate(1024);
-    });
+      // Generate locations for progress calculation
+      rendition.book.ready.then(() => {
+        return rendition.book.locations.generate(1024);
+      });
 
-    // Apply initial theme
-    const dark = document.documentElement.classList.contains("dark");
-    if (dark) {
-      rendition.themes.override("color", "#e0e0e0");
-      rendition.themes.override("background", "#1a1a1a");
-    }
-  }, []);
+      // Add custom CSS to fix layout issues with formulas and tables in paginated mode
+      if (flowMode === "paginated") {
+        rendition.themes.register("fix-layout", {
+          "img, svg, math, table, figure": {
+            "max-width": "100% !important",
+            "page-break-inside": "avoid",
+            "break-inside": "avoid",
+          },
+          ".MathJax, .MathJax_Display, [class*='math'], [class*='formula']": {
+            "page-break-inside": "avoid",
+            "break-inside": "avoid",
+            overflow: "visible",
+          },
+        });
+        rendition.themes.select("fix-layout");
+      }
+
+      // Apply initial theme
+      const dark = document.documentElement.classList.contains("dark");
+      if (dark) {
+        rendition.themes.override("color", "#e0e0e0");
+        rendition.themes.override("background", "#1a1a1a");
+      }
+    },
+    [flowMode],
+  );
 
   return (
     <div ref={containerRef} className="h-full w-full">
       <ReactReader
-        key={`${bookId}-${isDark ? "dark" : "light"}`}
+        key={`${bookId}-${isDark ? "dark" : "light"}-${flowMode}`}
         url={bookData}
         location={location}
         locationChanged={handleLocationChange}
@@ -306,6 +341,8 @@ export function Reader({
         readerStyles={readerStyles}
         epubOptions={{
           allowScriptedContent: true,
+          flow: flowMode,
+          manager: flowMode === "scrolled" ? "continuous" : "default",
         }}
       />
     </div>

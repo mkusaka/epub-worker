@@ -84,12 +84,75 @@ function ErrorFallback({ error }: { error: Error }) {
   );
 }
 
-function EmptyState() {
+function MainLibrary({
+  items,
+  onSelect,
+  onRemove,
+  onFileSelect,
+}: {
+  items: LibraryItem[];
+  onSelect: (item: LibraryItem) => void;
+  onRemove: (id: string) => void;
+  onFileSelect: (file: File) => void;
+}) {
+  if (items.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground">
+        <div className="text-center">
+          <p className="text-lg">No books in library</p>
+          <p className="text-sm mt-2">Add an EPUB file to get started</p>
+          <div className="mt-4">
+            <FileUpload onFileSelect={onFileSelect} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const sortedItems = [...items].sort((a, b) => {
+    const aTime = a.lastOpenedAt || a.addedAt;
+    const bTime = b.lastOpenedAt || b.addedAt;
+    return new Date(bTime).getTime() - new Date(aTime).getTime();
+  });
+
   return (
-    <div className="flex items-center justify-center h-full text-muted-foreground">
-      <div className="text-center">
-        <p className="text-lg">No book selected</p>
-        <p className="text-sm mt-2">Add an EPUB file or select one from the library</p>
+    <div className="h-full overflow-auto p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {sortedItems.map((item) => (
+          <div
+            key={item.id}
+            className="border rounded-lg p-4 cursor-pointer transition-colors hover:bg-accent"
+            onClick={() => onSelect(item)}
+          >
+            <h3 className="font-medium truncate">{item.title}</h3>
+            <p className="text-sm text-muted-foreground truncate mt-1">{item.filename}</p>
+            {item.lastOpenedAt && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Last read: {new Date(item.lastOpenedAt).toLocaleDateString()}
+              </p>
+            )}
+            <div className="flex gap-2 mt-3">
+              <button
+                className="flex-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(item);
+                }}
+              >
+                {item.lastLocation ? "Continue" : "Read"}
+              </button>
+              <button
+                className="px-3 py-1.5 text-sm bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(item.id);
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -172,7 +235,12 @@ function AppLayout({ bookId }: { bookId?: string }) {
                 </Suspense>
               </ErrorBoundary>
             ) : (
-              <EmptyState />
+              <MainLibrary
+                items={library}
+                onSelect={handleBookSelect}
+                onRemove={handleRemoveBook}
+                onFileSelect={handleFileSelect}
+              />
             )}
           </div>
         </main>

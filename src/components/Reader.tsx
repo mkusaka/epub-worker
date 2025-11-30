@@ -1,10 +1,30 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import { ReactReader, type IReactReaderStyle } from "react-reader";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useReaderSettings } from "@/contexts/ReaderSettingsContext";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rendition = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Book = any;
+
+export type SearchResult = {
+  cfi: string;
+  excerpt: string;
+};
+
+export type ReaderHandle = {
+  search: (query: string) => Promise<SearchResult[]>;
+  goToCfi: (cfi: string) => void;
+};
 
 type ReaderProps = {
   bookData: ArrayBuffer;
@@ -204,18 +224,57 @@ const darkReaderStyles: IReactReaderStyle = {
   },
 };
 
-export function Reader({
-  bookData,
-  bookId,
-  title,
-  onLocationChange,
-  initialLocation,
-}: ReaderProps) {
+export const Reader = forwardRef<ReaderHandle, ReaderProps>(function Reader(
+  { bookData, bookId, title, onLocationChange, initialLocation },
+  ref,
+) {
   const [location, setLocation] = useState<string | null>(initialLocation ?? null);
   const [rendition, setRendition] = useState<Rendition | null>(null);
+  const [book, setBook] = useState<Book | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
   const { flowMode } = useReaderSettings();
+
+  // Expose search and navigation methods via ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      search: async (query: string): Promise<SearchResult[]> => {
+        if (!book) return [];
+
+        const results: SearchResult[] = [];
+        const spine = book.spine;
+
+        // Search through all spine items
+        await Promise.all(
+          spine.spineItems.map(
+            async (item: {
+              load: (
+                book: Book,
+              ) => Promise<{ find: (query: string) => { cfi: string; excerpt: string }[] }>;
+            }) => {
+              const doc = await item.load(book.load.bind(book));
+              const matches = doc.find(query);
+              matches.forEach((match: { cfi: string; excerpt: string }) => {
+                results.push({
+                  cfi: match.cfi,
+                  excerpt: match.excerpt,
+                });
+              });
+            },
+          ),
+        );
+
+        return results;
+      },
+      goToCfi: (cfi: string) => {
+        if (rendition) {
+          rendition.display(cfi);
+        }
+      },
+    }),
+    [book, rendition],
+  );
 
   const readerStyles = useMemo(() => {
     const baseStyles = isDark ? darkReaderStyles : lightReaderStyles;
@@ -295,6 +354,7 @@ export function Reader({
   const handleRendition = useCallback(
     (rendition: Rendition) => {
       setRendition(rendition);
+      setBook(rendition.book);
 
       // Generate locations for progress calculation
       rendition.book.ready.then(() => {
@@ -347,4 +407,4 @@ export function Reader({
       />
     </div>
   );
-}
+});

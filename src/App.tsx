@@ -1,15 +1,16 @@
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, useRef } from "react";
 import { Routes, Route, useParams, useNavigate, Link } from "react-router-dom";
 import { ErrorBoundary } from "react-error-boundary";
 import { useLibrary } from "@/hooks/useLibrary";
 import type { LibraryItem } from "@/lib/storage";
 import { saveEpubData, loadEpubData, deleteEpubData } from "@/lib/epub-storage";
 import { createResource, invalidateResource } from "@/lib/suspense";
-import { Reader } from "@/components/Reader";
+import { Reader, type ReaderHandle } from "@/components/Reader";
 import { Library } from "@/components/Library";
 import { FileUpload } from "@/components/FileUpload";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FlowModeToggle } from "@/components/FlowModeToggle";
+import { SearchDialog } from "@/components/SearchDialog";
 import {
   Sidebar,
   SidebarContent,
@@ -42,11 +43,13 @@ function BookReaderContent({
   library,
   saveProgress,
   loadProgress,
+  readerRef,
 }: {
   bookId: string;
   library: LibraryItem[];
   saveProgress: (id: string, cfi: string, progress?: number) => void;
   loadProgress: (id: string) => string | null;
+  readerRef: React.RefObject<ReaderHandle | null>;
 }) {
   const { item, data } = useBookData(bookId, library);
 
@@ -59,6 +62,7 @@ function BookReaderContent({
 
   return (
     <Reader
+      ref={readerRef}
       key={item.id}
       bookData={data}
       bookId={item.id}
@@ -176,6 +180,7 @@ function MainLibrary({
 function AppLayout({ bookId }: { bookId?: string }) {
   const { library, addBook, removeBook, saveProgress, loadProgress } = useLibrary();
   const navigate = useNavigate();
+  const readerRef = useRef<ReaderHandle>(null);
 
   const handleFileSelect = useCallback(
     async (file: File) => {
@@ -208,6 +213,17 @@ function AppLayout({ bookId }: { bookId?: string }) {
 
   const activeItem = library.find((b) => b.id === bookId);
 
+  const handleSearch = useCallback(async (query: string) => {
+    if (!readerRef.current) return [];
+    return readerRef.current.search(query);
+  }, []);
+
+  const handleSearchResultClick = useCallback((cfi: string) => {
+    if (readerRef.current) {
+      readerRef.current.goToCfi(cfi);
+    }
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -234,6 +250,9 @@ function AppLayout({ bookId }: { bookId?: string }) {
             <span className="font-medium truncate flex-1">
               {activeItem?.title || "Select a book to read"}
             </span>
+            {bookId && (
+              <SearchDialog onSearch={handleSearch} onResultClick={handleSearchResultClick} />
+            )}
             <FlowModeToggle />
             <ThemeToggle />
           </header>
@@ -247,6 +266,7 @@ function AppLayout({ bookId }: { bookId?: string }) {
                     library={library}
                     saveProgress={saveProgress}
                     loadProgress={loadProgress}
+                    readerRef={readerRef}
                   />
                 </Suspense>
               </ErrorBoundary>

@@ -53,7 +53,7 @@ export function updateProgress(id: string, cfi: string) {
   const library = loadLibrary();
   const now = new Date().toISOString();
   const updated = library.map((item) =>
-    item.id === id ? { ...item, lastLocation: cfi, lastOpenedAt: now } : item
+    item.id === id ? { ...item, lastLocation: cfi, lastOpenedAt: now } : item,
   );
   saveLibrary(updated);
 }

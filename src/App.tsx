@@ -53,7 +53,7 @@ function BookReaderContent({
     (cfi: string) => {
       saveProgress(item.id, cfi);
     },
-    [item.id, saveProgress]
+    [item.id, saveProgress],
   );
 
   return (
@@ -89,9 +89,7 @@ function EmptyState() {
     <div className="flex items-center justify-center h-full text-muted-foreground">
       <div className="text-center">
         <p className="text-lg">No book selected</p>
-        <p className="text-sm mt-2">
-          Add an EPUB file or select one from the library
-        </p>
+        <p className="text-sm mt-2">Add an EPUB file or select one from the library</p>
       </div>
     </div>
   );
@@ -108,14 +106,14 @@ function AppLayout({ bookId }: { bookId?: string }) {
       await saveEpubData(item.id, data);
       navigate(`/book/${item.id}`);
     },
-    [addBook, navigate]
+    [addBook, navigate],
   );
 
   const handleBookSelect = useCallback(
     (item: LibraryItem) => {
       navigate(`/book/${item.id}`);
     },
-    [navigate]
+    [navigate],
   );
 
   const handleRemoveBook = useCallback(
@@ -127,7 +125,7 @@ function AppLayout({ bookId }: { bookId?: string }) {
         navigate("/");
       }
     },
-    [removeBook, bookId, navigate]
+    [removeBook, bookId, navigate],
   );
 
   const activeItem = library.find((b) => b.id === bookId);

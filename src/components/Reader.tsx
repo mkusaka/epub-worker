@@ -210,13 +210,11 @@ export function Reader({
   onLocationChange,
   initialLocation,
 }: ReaderProps) {
-  const [location, setLocation] = useState<string | null>(
-    initialLocation ?? null
-  );
+  const [location, setLocation] = useState<string | null>(initialLocation ?? null);
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const { isDark } = useTheme();
 
-  const readerStyles = useMemo(() => isDark ? darkReaderStyles : lightReaderStyles, [isDark]);
+  const readerStyles = useMemo(() => (isDark ? darkReaderStyles : lightReaderStyles), [isDark]);
 
   useEffect(() => {
     if (initialLocation) {

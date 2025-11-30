@@ -29,11 +29,7 @@ export function FileUpload({ onFileSelect }: FileUploadProps) {
         className="hidden"
         id="epub-upload"
       />
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => inputRef.current?.click()}
-      >
+      <Button variant="outline" className="w-full" onClick={() => inputRef.current?.click()}>
         Add EPUB
       </Button>
     </div>

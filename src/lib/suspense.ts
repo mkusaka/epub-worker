@@ -17,10 +17,7 @@ type Result<T> = PendingResult | FulfilledResult<T> | RejectedResult;
 
 const cache = new Map<string, Result<unknown>>();
 
-export function createResource<T>(
-  key: string,
-  fetcher: () => Promise<T>
-): T {
+export function createResource<T>(key: string, fetcher: () => Promise<T>): T {
   const cached = cache.get(key) as Result<T> | undefined;
 
   if (cached) {

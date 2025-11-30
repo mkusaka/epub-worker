@@ -38,14 +38,10 @@ export function Library({ items, onSelect, onRemove, selectedId }: LibraryProps)
             onClick={() => onSelect(item)}
           >
             <CardHeader className="p-3 pb-1">
-              <CardTitle className="text-sm font-medium truncate">
-                {item.title}
-              </CardTitle>
+              <CardTitle className="text-sm font-medium truncate">{item.title}</CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-1">
-              <p className="text-xs text-muted-foreground truncate">
-                {item.filename}
-              </p>
+              <p className="text-xs text-muted-foreground truncate">{item.filename}</p>
               {item.lastOpenedAt && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Last read: {new Date(item.lastOpenedAt).toLocaleDateString()}

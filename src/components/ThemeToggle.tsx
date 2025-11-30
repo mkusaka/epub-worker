@@ -76,15 +76,22 @@ export function ThemeToggle() {
 
   return (
     <Select value={theme} onValueChange={(value) => setTheme(value as Theme)}>
-      <SelectTrigger className="w-9 h-9 px-0 gap-0 justify-center [&_svg.size-4.opacity-50]:hidden" aria-label="Theme">
-        <SelectValue>
-          {themeIcons[theme]}
-        </SelectValue>
+      <SelectTrigger
+        className="w-9 h-9 px-0 gap-0 justify-center [&_svg.size-4.opacity-50]:hidden"
+        aria-label="Theme"
+      >
+        <SelectValue>{themeIcons[theme]}</SelectValue>
       </SelectTrigger>
       <SelectContent className="min-w-0">
-        <SelectItem value="system"><MonitorIcon /></SelectItem>
-        <SelectItem value="light"><SunIcon /></SelectItem>
-        <SelectItem value="dark"><MoonIcon /></SelectItem>
+        <SelectItem value="system">
+          <MonitorIcon />
+        </SelectItem>
+        <SelectItem value="light">
+          <SunIcon />
+        </SelectItem>
+        <SelectItem value="dark">
+          <MoonIcon />
+        </SelectItem>
       </SelectContent>
     </Select>
   );

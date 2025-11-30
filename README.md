@@ -8,6 +8,7 @@ A browser-based EPUB reader built with React and designed to run on Cloudflare W
 - **Library Management** - Add, remove, and organize your EPUB collection
 - **Reading Progress** - Automatically saves and restores your reading position (CFI-based)
 - **Dark Mode** - System, light, and dark theme support with EPUB content theming
+- **PWA Support** - Install as a standalone app with offline support
 - **Offline Storage** - EPUB files stored in IndexedDB for offline access
 - **URL Routing** - Each book has its own URL for easy bookmarking and sharing
 
@@ -20,6 +21,7 @@ A browser-based EPUB reader built with React and designed to run on Cloudflare W
 - **react-reader** (epub.js wrapper) for EPUB rendering
 - **React Router** for client-side routing
 - **React Suspense** for data fetching
+- **vite-plugin-pwa** for PWA/Service Worker
 - **Cloudflare Workers** for deployment
 
 ## Getting Started

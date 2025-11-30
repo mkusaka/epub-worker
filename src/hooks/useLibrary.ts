@@ -28,8 +28,8 @@ export function useLibrary() {
     setLibrary(loadLibrary());
   }, []);
 
-  const saveProgress = useCallback((id: string, cfi: string) => {
-    updateProgress(id, cfi);
+  const saveProgress = useCallback((id: string, cfi: string, progress?: number) => {
+    updateProgress(id, cfi, progress);
     setLibrary(loadLibrary());
   }, []);
 

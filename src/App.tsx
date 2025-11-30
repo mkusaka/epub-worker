@@ -44,14 +44,14 @@ function BookReaderContent({
 }: {
   bookId: string;
   library: LibraryItem[];
-  saveProgress: (id: string, cfi: string) => void;
+  saveProgress: (id: string, cfi: string, progress?: number) => void;
   loadProgress: (id: string) => string | null;
 }) {
   const { item, data } = useBookData(bookId, library);
 
   const handleLocationChange = useCallback(
-    (cfi: string) => {
-      saveProgress(item.id, cfi);
+    (cfi: string, progress: number) => {
+      saveProgress(item.id, cfi, progress);
     },
     [item.id, saveProgress],
   );
@@ -126,6 +126,20 @@ function MainLibrary({
           >
             <h3 className="font-medium truncate">{item.title}</h3>
             <p className="text-sm text-muted-foreground truncate mt-1">{item.filename}</p>
+            {item.progress !== undefined && item.progress > 0 && (
+              <div className="mt-2">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>Progress</span>
+                  <span>{item.progress}%</span>
+                </div>
+                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all"
+                    style={{ width: `${item.progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
             {item.lastOpenedAt && (
               <p className="text-xs text-muted-foreground mt-2">
                 Last read: {new Date(item.lastOpenedAt).toLocaleDateString()}

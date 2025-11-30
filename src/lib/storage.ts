@@ -5,6 +5,7 @@ export type LibraryItem = {
   addedAt: string;
   lastOpenedAt?: string;
   lastLocation?: string;
+  progress?: number; // 0-100
 };
 
 const LIBRARY_KEY = "epub-library";
@@ -47,13 +48,15 @@ export function getProgress(id: string): string | null {
   return localStorage.getItem(`epub-progress:${id}`);
 }
 
-export function updateProgress(id: string, cfi: string) {
+export function updateProgress(id: string, cfi: string, progress?: number) {
   localStorage.setItem(`epub-progress:${id}`, cfi);
 
   const library = loadLibrary();
   const now = new Date().toISOString();
   const updated = library.map((item) =>
-    item.id === id ? { ...item, lastLocation: cfi, lastOpenedAt: now } : item,
+    item.id === id
+      ? { ...item, lastLocation: cfi, lastOpenedAt: now, progress: progress ?? item.progress }
+      : item,
   );
   saveLibrary(updated);
 }

@@ -9,7 +9,7 @@ type ReaderProps = {
   bookData: ArrayBuffer;
   bookId: string;
   title: string;
-  onLocationChange?: (cfi: string) => void;
+  onLocationChange?: (cfi: string, progress: number) => void;
   initialLocation?: string | null;
 };
 
@@ -236,7 +236,15 @@ export function Reader({
 
   const handleLocationChange = (loc: string) => {
     setLocation(loc);
-    onLocationChange?.(loc);
+    if (rendition && onLocationChange) {
+      const currentLocation = rendition.currentLocation();
+      if (currentLocation?.start?.percentage !== undefined) {
+        const progress = Math.round(currentLocation.start.percentage * 100);
+        onLocationChange(loc, progress);
+      } else {
+        onLocationChange(loc, 0);
+      }
+    }
   };
 
   const handleRendition = useCallback((rendition: Rendition) => {

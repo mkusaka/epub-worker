@@ -42,6 +42,17 @@ export function Library({ items, onSelect, onRemove, selectedId }: LibraryProps)
             </CardHeader>
             <CardContent className="p-3 pt-1">
               <p className="text-xs text-muted-foreground truncate">{item.filename}</p>
+              {item.progress !== undefined && item.progress > 0 && (
+                <div className="mt-2">
+                  <div className="h-1 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all"
+                      style={{ width: `${item.progress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{item.progress}%</p>
+                </div>
+              )}
               {item.lastOpenedAt && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Last read: {new Date(item.lastOpenedAt).toLocaleDateString()}

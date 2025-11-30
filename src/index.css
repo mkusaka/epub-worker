@@ -7,13 +7,6 @@
   --animate-spin-slow: spin 20s linear infinite;
 }
 
-body {
-  @apply min-h-screen flex items-center justify-center bg-zinc-900 text-white/85 antialiased;
-}
-
-a {
-  @apply font-medium text-indigo-400 no-underline hover:text-indigo-300;
-}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

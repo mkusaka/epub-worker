@@ -1,59 +1,128 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import cloudflareLogo from './assets/Cloudflare_Logo.svg'
+import { useState, useCallback } from "react";
+import { useLibrary } from "@/hooks/useLibrary";
+import type { LibraryItem } from "@/lib/storage";
+import { Reader } from "@/components/Reader";
+import { Library } from "@/components/Library";
+import { FileUpload } from "@/components/FileUpload";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+
+type ActiveBook = {
+  item: LibraryItem;
+  url: string;
+};
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [name, setName] = useState('unknown')
+  const { library, addBook, removeBook, saveProgress, loadProgress } = useLibrary();
+  const [activeBook, setActiveBook] = useState<ActiveBook | null>(null);
+  const [fileMap, setFileMap] = useState<Map<string, File>>(new Map());
+
+  const handleFileSelect = useCallback(
+    async (file: File) => {
+      const item = await addBook(file);
+      setFileMap((prev) => new Map(prev).set(item.id, file));
+      const url = URL.createObjectURL(file);
+      setActiveBook({ item, url });
+    },
+    [addBook]
+  );
+
+  const handleBookSelect = useCallback(
+    (item: LibraryItem) => {
+      const existingFile = fileMap.get(item.id);
+      if (existingFile) {
+        const url = URL.createObjectURL(existingFile);
+        setActiveBook({ item, url });
+      } else {
+        setActiveBook(null);
+        alert("Please re-add the EPUB file to read it again.");
+      }
+    },
+    [fileMap]
+  );
+
+  const handleRemoveBook = useCallback(
+    (id: string) => {
+      removeBook(id);
+      if (activeBook?.item.id === id) {
+        setActiveBook(null);
+      }
+      setFileMap((prev) => {
+        const next = new Map(prev);
+        next.delete(id);
+        return next;
+      });
+    },
+    [removeBook, activeBook]
+  );
+
+  const handleLocationChange = useCallback(
+    (cfi: string) => {
+      if (activeBook) {
+        saveProgress(activeBook.item.id, cfi);
+      }
+    },
+    [activeBook, saveProgress]
+  );
 
   return (
-    <div className='max-w-5xl mx-auto p-8 text-center'>
-      <div className='flex justify-center'>
-        <a href='https://vite.dev' target='_blank'>
-          <img src={viteLogo} className='h-24 p-6 transition-[filter] duration-300 hover:drop-shadow-[0_0_2em_#646cffaa]' alt='Vite logo' />
-        </a>
-        <a href='https://react.dev' target='_blank'>
-          <img src={reactLogo} className='h-24 p-6 transition-[filter] duration-300 hover:drop-shadow-[0_0_2em_#61dafbaa] motion-safe:animate-spin-slow' alt='React logo' />
-        </a>
-        <a href='https://workers.cloudflare.com/' target='_blank'>
-          <img src={cloudflareLogo} className='h-24 p-6 transition-[filter] duration-300 hover:drop-shadow-[0_0_2em_#f6821faa]' alt='Cloudflare logo' />
-        </a>
+    <SidebarProvider>
+      <div className="flex h-screen w-full">
+        <Sidebar>
+          <SidebarHeader className="p-4 border-b">
+            <h1 className="font-semibold text-lg">EPUB Reader</h1>
+            <FileUpload onFileSelect={handleFileSelect} />
+          </SidebarHeader>
+          <SidebarContent>
+            <Library
+              items={library}
+              onSelect={handleBookSelect}
+              onRemove={handleRemoveBook}
+              selectedId={activeBook?.item.id}
+            />
+          </SidebarContent>
+        </Sidebar>
+
+        <main className="flex-1 flex flex-col">
+          <header className="h-12 border-b flex items-center px-4 gap-2">
+            <SidebarTrigger />
+            <span className="font-medium truncate flex-1">
+              {activeBook?.item.title || "Select a book to read"}
+            </span>
+            <ThemeToggle />
+          </header>
+
+          <div className="flex-1 relative">
+            {activeBook ? (
+              <Reader
+                key={activeBook.item.id}
+                fileUrl={activeBook.url}
+                bookId={activeBook.item.id}
+                title={activeBook.item.title}
+                initialLocation={loadProgress(activeBook.item.id)}
+                onLocationChange={handleLocationChange}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="text-center">
+                  <p className="text-lg">No book selected</p>
+                  <p className="text-sm mt-2">
+                    Add an EPUB file or select one from the library
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
-      <h1 className='text-5xl leading-tight'>Vite + React + Cloudflare</h1>
-      <div className='p-8'>
-        <button
-          onClick={() => setCount((count) => count + 1)}
-          aria-label='increment'
-          className='rounded-lg border border-transparent px-5 py-2.5 text-base font-medium bg-zinc-900 cursor-pointer transition-colors hover:border-indigo-500 focus:outline-4 focus:outline-auto'
-        >
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <div className='p-8'>
-        <button
-          onClick={() => {
-            fetch('/api/')
-              .then((res) => res.json() as Promise<{ name: string }>)
-              .then((data) => setName(data.name))
-          }}
-          aria-label='get name'
-          className='rounded-lg border border-transparent px-5 py-2.5 text-base font-medium bg-zinc-900 cursor-pointer transition-colors hover:border-indigo-500 focus:outline-4 focus:outline-auto'
-        >
-          Name from API is: {name}
-        </button>
-        <p>
-          Edit <code>worker/index.ts</code> to change the name
-        </p>
-      </div>
-      <p className='text-gray-500'>
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
+    </SidebarProvider>
+  );
 }
 
-export default App
+export default App;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ReactReader, type IReactReaderStyle } from "react-reader";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -212,9 +212,28 @@ export function Reader({
 }: ReaderProps) {
   const [location, setLocation] = useState<string | null>(initialLocation ?? null);
   const [rendition, setRendition] = useState<Rendition | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
 
   const readerStyles = useMemo(() => (isDark ? darkReaderStyles : lightReaderStyles), [isDark]);
+
+  // Handle container resize (e.g., sidebar toggle)
+  useEffect(() => {
+    if (!rendition || !containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Debounce resize to avoid excessive calls
+      requestAnimationFrame(() => {
+        rendition.resize();
+      });
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [rendition]);
 
   useEffect(() => {
     if (initialLocation) {
@@ -275,7 +294,7 @@ export function Reader({
   }, []);
 
   return (
-    <div className="h-full w-full">
+    <div ref={containerRef} className="h-full w-full">
       <ReactReader
         key={`${bookId}-${isDark ? "dark" : "light"}`}
         url={bookData}

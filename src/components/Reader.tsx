@@ -232,6 +232,7 @@ export const Reader = forwardRef<ReaderHandle, ReaderProps>(function Reader(
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const [book, setBook] = useState<Book | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const renditionRef = useRef<Rendition | null>(null);
   const { isDark } = useTheme();
   const { flowMode } = useReaderSettings();
 
@@ -288,15 +289,20 @@ export const Reader = forwardRef<ReaderHandle, ReaderProps>(function Reader(
     return baseStyles;
   }, [isDark, flowMode]);
 
+  // Keep renditionRef in sync with rendition state
+  useEffect(() => {
+    renditionRef.current = rendition;
+  }, [rendition]);
+
   // Handle container resize (e.g., sidebar toggle)
   useEffect(() => {
-    if (!rendition || !containerRef.current) return;
+    if (!containerRef.current) return;
 
     const resizeObserver = new ResizeObserver(() => {
       // Debounce resize to avoid excessive calls
       requestAnimationFrame(() => {
-        if (rendition) {
-          rendition.resize();
+        if (renditionRef.current) {
+          renditionRef.current.resize();
         }
       });
     });
@@ -306,7 +312,7 @@ export const Reader = forwardRef<ReaderHandle, ReaderProps>(function Reader(
     return () => {
       resizeObserver.disconnect();
     };
-  }, [rendition]);
+  }, []);
 
   useEffect(() => {
     if (initialLocation) {
@@ -328,26 +334,28 @@ export const Reader = forwardRef<ReaderHandle, ReaderProps>(function Reader(
 
   const handleLocationChange = (loc: string) => {
     setLocation(loc);
-    if (rendition && onLocationChange) {
-      // Try to get percentage from locations
-      const locations = rendition.book?.locations;
-      if (locations && locations.total > 0) {
-        const percentage = locations.percentageFromCfi(loc);
+    if (!rendition || !onLocationChange) return;
+
+    const locations = rendition.book?.locations;
+    if (locations && locations.total > 0) {
+      // Convert href to CFI if needed
+      const cfi = loc.startsWith("epubcfi(")
+        ? loc
+        : locations.cfiFromHref?.(loc) ?? null;
+
+      if (cfi) {
+        const percentage = locations.percentageFromCfi(cfi);
         if (percentage !== undefined && !isNaN(percentage)) {
-          const progress = Math.round(percentage * 100);
-          onLocationChange(loc, progress);
+          onLocationChange(loc, Math.round(percentage * 100));
           return;
         }
       }
-      // Fallback: try currentLocation
-      const currentLocation = rendition.currentLocation();
-      if (currentLocation?.start?.percentage !== undefined) {
-        const progress = Math.round(currentLocation.start.percentage * 100);
-        onLocationChange(loc, progress);
-      } else {
-        onLocationChange(loc, 0);
-      }
     }
+
+    // Fallback: try currentLocation
+    const currentLocation = rendition.currentLocation();
+    const percentage = currentLocation?.start?.percentage;
+    onLocationChange(loc, percentage !== undefined ? Math.round(percentage * 100) : 0);
   };
 
   const handleRendition = useCallback(

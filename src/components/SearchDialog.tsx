@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { SearchIcon, XIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { SearchResult } from "@/components/Reader";
+import { useDebounce } from "use-debounce";
 import {
   Dialog,
   DialogContent,
@@ -18,17 +19,44 @@ type SearchDialogProps = {
   onResultClick: (cfi: string) => void;
 };
 
+const DEBOUNCE_DELAY = 300;
+
 export function SearchDialog({ onSearch, onResultClick }: SearchDialogProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [isComposing, setIsComposing] = useState(false);
+  const isComposingRef = useRef(false);
 
-  const handleSearch = useCallback(
-    async (searchQuery: string) => {
-      if (!searchQuery.trim()) {
+  const [debouncedQuery] = useDebounce(query, DEBOUNCE_DELAY);
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setQuery(e.target.value);
+    },
+    [],
+  );
+
+  const handleCompositionStart = useCallback(() => {
+    isComposingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback(
+    (e: React.CompositionEvent<HTMLInputElement>) => {
+      isComposingRef.current = false;
+      // Ensure the final composed value is set
+      setQuery(e.currentTarget.value);
+    },
+    [],
+  );
+
+  // Trigger search when debounced query changes
+  useEffect(() => {
+    if (!open) return;
+
+    const doSearch = async () => {
+      if (!debouncedQuery.trim()) {
         setResults([]);
         setHasSearched(false);
         return;
@@ -37,7 +65,7 @@ export function SearchDialog({ onSearch, onResultClick }: SearchDialogProps) {
       setIsSearching(true);
       setHasSearched(true);
       try {
-        const searchResults = await onSearch(searchQuery.trim());
+        const searchResults = await onSearch(debouncedQuery.trim());
         setResults(searchResults);
       } catch (error) {
         console.error("Search failed:", error);
@@ -45,9 +73,10 @@ export function SearchDialog({ onSearch, onResultClick }: SearchDialogProps) {
       } finally {
         setIsSearching(false);
       }
-    },
-    [onSearch],
-  );
+    };
+
+    doSearch();
+  }, [debouncedQuery, onSearch, open]);
 
   const handleResultClick = useCallback(
     (cfi: string) => {
@@ -56,31 +85,6 @@ export function SearchDialog({ onSearch, onResultClick }: SearchDialogProps) {
     },
     [onResultClick],
   );
-
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newQuery = e.target.value;
-      setQuery(newQuery);
-      // Trigger search on input change when not composing (for non-IME input)
-      if (!isComposing && newQuery.trim()) {
-        handleSearch(newQuery);
-      }
-    },
-    [isComposing, handleSearch],
-  );
-
-  const handleCompositionEnd = useCallback(
-    (e: React.CompositionEvent<HTMLInputElement>) => {
-      setIsComposing(false);
-      const target = e.target as HTMLInputElement;
-      handleSearch(target.value);
-    },
-    [handleSearch],
-  );
-
-  const handleCompositionStart = useCallback(() => {
-    setIsComposing(true);
-  }, []);
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     setOpen(isOpen);

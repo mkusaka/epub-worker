@@ -1,11 +1,17 @@
-import { useTheme } from "@/contexts/ThemeContext";
-import { Button } from "@/components/ui/button";
+import { useTheme, type Theme } from "@/contexts/ThemeContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const SunIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -28,8 +34,8 @@ const SunIcon = () => (
 const MoonIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -41,11 +47,11 @@ const MoonIcon = () => (
   </svg>
 );
 
-const SystemIcon = () => (
+const MonitorIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -59,24 +65,27 @@ const SystemIcon = () => (
   </svg>
 );
 
+const themeIcons: Record<Theme, React.ReactNode> = {
+  light: <SunIcon />,
+  dark: <MoonIcon />,
+  system: <MonitorIcon />,
+};
+
 export function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
-
-  const icon =
-    theme === "light" ? <SunIcon /> : theme === "dark" ? <MoonIcon /> : <SystemIcon />;
-
-  const label =
-    theme === "light" ? "Light" : theme === "dark" ? "Dark" : "System";
+  const { theme, setTheme } = useTheme();
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggleTheme}
-      aria-label={`Theme: ${label}`}
-      title={`Theme: ${label}`}
-    >
-      {icon}
-    </Button>
+    <Select value={theme} onValueChange={(value) => setTheme(value as Theme)}>
+      <SelectTrigger className="w-9 h-9 px-0 gap-0 justify-center [&_svg.size-4.opacity-50]:hidden" aria-label="Theme">
+        <SelectValue>
+          {themeIcons[theme]}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent className="min-w-0">
+        <SelectItem value="system"><MonitorIcon /></SelectItem>
+        <SelectItem value="light"><SunIcon /></SelectItem>
+        <SelectItem value="dark"><MoonIcon /></SelectItem>
+      </SelectContent>
+    </Select>
   );
 }

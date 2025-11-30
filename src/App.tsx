@@ -1,5 +1,5 @@
 import { Suspense, useCallback } from "react";
-import { Routes, Route, useParams, useNavigate } from "react-router-dom";
+import { Routes, Route, useParams, useNavigate, Link } from "react-router-dom";
 import { ErrorBoundary } from "react-error-boundary";
 import { useLibrary } from "@/hooks/useLibrary";
 import type { LibraryItem } from "@/lib/storage";
@@ -137,7 +137,9 @@ function AppLayout({ bookId }: { bookId?: string }) {
       <div className="flex h-screen w-full">
         <Sidebar>
           <SidebarHeader className="p-4 border-b">
-            <h1 className="font-semibold text-lg">EPUB Reader</h1>
+            <Link to="/" className="font-semibold text-lg hover:opacity-80">
+              EPUB Reader
+            </Link>
             <FileUpload onFileSelect={handleFileSelect} />
           </SidebarHeader>
           <SidebarContent>

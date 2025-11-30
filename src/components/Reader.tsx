@@ -237,6 +237,17 @@ export function Reader({
   const handleLocationChange = (loc: string) => {
     setLocation(loc);
     if (rendition && onLocationChange) {
+      // Try to get percentage from locations
+      const locations = rendition.book?.locations;
+      if (locations && locations.total > 0) {
+        const percentage = locations.percentageFromCfi(loc);
+        if (percentage !== undefined && !isNaN(percentage)) {
+          const progress = Math.round(percentage * 100);
+          onLocationChange(loc, progress);
+          return;
+        }
+      }
+      // Fallback: try currentLocation
       const currentLocation = rendition.currentLocation();
       if (currentLocation?.start?.percentage !== undefined) {
         const progress = Math.round(currentLocation.start.percentage * 100);
@@ -249,6 +260,11 @@ export function Reader({
 
   const handleRendition = useCallback((rendition: Rendition) => {
     setRendition(rendition);
+
+    // Generate locations for progress calculation
+    rendition.book.ready.then(() => {
+      return rendition.book.locations.generate(1024);
+    });
 
     // Apply initial theme
     const dark = document.documentElement.classList.contains("dark");

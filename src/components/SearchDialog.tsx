@@ -31,25 +31,19 @@ export function SearchDialog({ onSearch, onResultClick }: SearchDialogProps) {
 
   const [debouncedQuery] = useDebounce(query, DEBOUNCE_DELAY);
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setQuery(e.target.value);
-    },
-    [],
-  );
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  }, []);
 
   const handleCompositionStart = useCallback(() => {
     isComposingRef.current = true;
   }, []);
 
-  const handleCompositionEnd = useCallback(
-    (e: React.CompositionEvent<HTMLInputElement>) => {
-      isComposingRef.current = false;
-      // Ensure the final composed value is set
-      setQuery(e.currentTarget.value);
-    },
-    [],
-  );
+  const handleCompositionEnd = useCallback((e: React.CompositionEvent<HTMLInputElement>) => {
+    isComposingRef.current = false;
+    // Ensure the final composed value is set
+    setQuery(e.currentTarget.value);
+  }, []);
 
   // Trigger search when debounced query changes
   useEffect(() => {

@@ -339,9 +339,7 @@ export const Reader = forwardRef<ReaderHandle, ReaderProps>(function Reader(
     const locations = rendition.book?.locations;
     if (locations && locations.total > 0) {
       // Convert href to CFI if needed
-      const cfi = loc.startsWith("epubcfi(")
-        ? loc
-        : locations.cfiFromHref?.(loc) ?? null;
+      const cfi = loc.startsWith("epubcfi(") ? loc : (locations.cfiFromHref?.(loc) ?? null);
 
       if (cfi) {
         const percentage = locations.percentageFromCfi(cfi);

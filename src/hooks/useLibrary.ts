@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import {
   type LibraryItem,
   loadLibrary,
@@ -10,13 +10,7 @@ import {
 } from "@/lib/storage";
 
 export function useLibrary() {
-  const [library, setLibrary] = useState<LibraryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    setLibrary(loadLibrary());
-    setIsLoading(false);
-  }, []);
+  const [library, setLibrary] = useState<LibraryItem[]>(() => loadLibrary());
 
   const addBook = useCallback(async (file: File, title?: string) => {
     const id = await generateBookId(file);
@@ -45,7 +39,6 @@ export function useLibrary() {
 
   return {
     library,
-    isLoading,
     addBook,
     removeBook,
     saveProgress,

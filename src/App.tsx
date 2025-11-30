@@ -1,8 +1,10 @@
-import { useState, useCallback, useEffect } from "react";
+import { Suspense, useCallback } from "react";
 import { Routes, Route, useParams, useNavigate } from "react-router-dom";
+import { ErrorBoundary } from "react-error-boundary";
 import { useLibrary } from "@/hooks/useLibrary";
 import type { LibraryItem } from "@/lib/storage";
 import { saveEpubData, loadEpubData, deleteEpubData } from "@/lib/epub-storage";
+import { createResource, invalidateResource } from "@/lib/suspense";
 import { Reader } from "@/components/Reader";
 import { Library } from "@/components/Library";
 import { FileUpload } from "@/components/FileUpload";
@@ -15,85 +17,70 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-type ActiveBook = {
+type BookData = {
   item: LibraryItem;
   data: ArrayBuffer;
 };
 
-function BookReader({
+function useBookData(bookId: string, library: LibraryItem[]): BookData {
+  return createResource(`book:${bookId}`, async () => {
+    const item = library.find((b) => b.id === bookId);
+    if (!item) {
+      throw new Error("Book not found in library");
+    }
+    const data = await loadEpubData(bookId);
+    if (!data) {
+      throw new Error("EPUB file not found. Please re-add the file.");
+    }
+    return { item, data };
+  });
+}
+
+function BookReaderContent({
+  bookId,
   library,
   saveProgress,
   loadProgress,
 }: {
+  bookId: string;
   library: LibraryItem[];
   saveProgress: (id: string, cfi: string) => void;
   loadProgress: (id: string) => string | null;
 }) {
-  const { bookId } = useParams<{ bookId: string }>();
-  const [activeBook, setActiveBook] = useState<ActiveBook | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!bookId) return;
-
-    const item = library.find((b) => b.id === bookId);
-    if (!item) {
-      setError("Book not found in library");
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    loadEpubData(bookId)
-      .then((data) => {
-        if (data) {
-          setActiveBook({ item, data });
-        } else {
-          setError("EPUB file not found. Please re-add the file.");
-        }
-      })
-      .finally(() => setIsLoading(false));
-  }, [bookId, library]);
+  const { item, data } = useBookData(bookId, library);
 
   const handleLocationChange = useCallback(
     (cfi: string) => {
-      if (activeBook) {
-        saveProgress(activeBook.item.id, cfi);
-      }
+      saveProgress(item.id, cfi);
     },
-    [activeBook, saveProgress]
+    [item.id, saveProgress]
   );
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        <p>{error}</p>
-      </div>
-    );
-  }
-
-  if (!activeBook) {
-    return null;
-  }
 
   return (
     <Reader
-      key={activeBook.item.id}
-      bookData={activeBook.data}
-      bookId={activeBook.item.id}
-      title={activeBook.item.title}
-      initialLocation={loadProgress(activeBook.item.id)}
+      key={item.id}
+      bookData={data}
+      bookId={item.id}
+      title={item.title}
+      initialLocation={loadProgress(item.id)}
       onLocationChange={handleLocationChange}
     />
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-full text-muted-foreground">
+      <p>Loading...</p>
+    </div>
+  );
+}
+
+function ErrorFallback({ error }: { error: Error }) {
+  return (
+    <div className="flex items-center justify-center h-full text-muted-foreground">
+      <p>{error.message}</p>
+    </div>
   );
 }
 
@@ -135,6 +122,7 @@ function AppLayout({ bookId }: { bookId?: string }) {
     async (id: string) => {
       removeBook(id);
       await deleteEpubData(id);
+      invalidateResource(`book:${id}`);
       if (bookId === id) {
         navigate("/");
       }
@@ -173,11 +161,16 @@ function AppLayout({ bookId }: { bookId?: string }) {
 
           <div className="flex-1 relative">
             {bookId ? (
-              <BookReader
-                library={library}
-                saveProgress={saveProgress}
-                loadProgress={loadProgress}
-              />
+              <ErrorBoundary FallbackComponent={ErrorFallback} resetKeys={[bookId]}>
+                <Suspense fallback={<LoadingFallback />}>
+                  <BookReaderContent
+                    bookId={bookId}
+                    library={library}
+                    saveProgress={saveProgress}
+                    loadProgress={loadProgress}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             ) : (
               <EmptyState />
             )}

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useLibrary } from "@/hooks/useLibrary";
 import type { LibraryItem } from "@/lib/storage";
+import { saveEpubData, loadEpubData, deleteEpubData } from "@/lib/epub-storage";
 import { Reader } from "@/components/Reader";
 import { Library } from "@/components/Library";
 import { FileUpload } from "@/components/FileUpload";
@@ -15,49 +16,53 @@ import {
 
 type ActiveBook = {
   item: LibraryItem;
-  url: string;
+  data: ArrayBuffer;
 };
 
 function App() {
   const { library, addBook, removeBook, saveProgress, loadProgress } = useLibrary();
   const [activeBook, setActiveBook] = useState<ActiveBook | null>(null);
-  const [fileMap, setFileMap] = useState<Map<string, File>>(new Map());
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleFileSelect = useCallback(
     async (file: File) => {
-      const item = await addBook(file);
-      setFileMap((prev) => new Map(prev).set(item.id, file));
-      const url = URL.createObjectURL(file);
-      setActiveBook({ item, url });
+      setIsLoading(true);
+      try {
+        const item = await addBook(file);
+        const data = await file.arrayBuffer();
+        await saveEpubData(item.id, data);
+        setActiveBook({ item, data });
+      } finally {
+        setIsLoading(false);
+      }
     },
     [addBook]
   );
 
   const handleBookSelect = useCallback(
-    (item: LibraryItem) => {
-      const existingFile = fileMap.get(item.id);
-      if (existingFile) {
-        const url = URL.createObjectURL(existingFile);
-        setActiveBook({ item, url });
-      } else {
-        setActiveBook(null);
-        alert("Please re-add the EPUB file to read it again.");
+    async (item: LibraryItem) => {
+      setIsLoading(true);
+      try {
+        const data = await loadEpubData(item.id);
+        if (data) {
+          setActiveBook({ item, data });
+        } else {
+          alert("EPUB file not found. Please re-add the file.");
+        }
+      } finally {
+        setIsLoading(false);
       }
     },
-    [fileMap]
+    []
   );
 
   const handleRemoveBook = useCallback(
-    (id: string) => {
+    async (id: string) => {
       removeBook(id);
+      await deleteEpubData(id);
       if (activeBook?.item.id === id) {
         setActiveBook(null);
       }
-      setFileMap((prev) => {
-        const next = new Map(prev);
-        next.delete(id);
-        return next;
-      });
     },
     [removeBook, activeBook]
   );
@@ -99,10 +104,14 @@ function App() {
           </header>
 
           <div className="flex-1 relative">
-            {activeBook ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <p>Loading...</p>
+              </div>
+            ) : activeBook ? (
               <Reader
                 key={activeBook.item.id}
-                fileUrl={activeBook.url}
+                bookData={activeBook.data}
                 bookId={activeBook.item.id}
                 title={activeBook.item.title}
                 initialLocation={loadProgress(activeBook.item.id)}

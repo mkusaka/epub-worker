@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -81,6 +82,7 @@ export function SearchDialog({ onSearch, onResultClick }: SearchDialogProps) {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Search in book</DialogTitle>
+          <DialogDescription>Find text within the current book</DialogDescription>
         </DialogHeader>
         <div className="flex gap-2">
           <Input

@@ -298,7 +298,9 @@ export const Reader = forwardRef<ReaderHandle, ReaderProps>(function Reader(
     const resizeObserver = new ResizeObserver(() => {
       // Debounce resize to avoid excessive calls
       requestAnimationFrame(() => {
-        rendition.resize();
+        if (rendition) {
+          rendition.resize();
+        }
       });
     });
 

@@ -17,6 +17,21 @@ function getSystemTheme(): boolean {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
+const LIGHT_THEME_COLOR = "#ffffff";
+const DARK_THEME_COLOR = "#0a0a0a";
+
+function updateThemeColor(isDark: boolean) {
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]:not([media])');
+  if (themeColorMeta) {
+    themeColorMeta.setAttribute("content", isDark ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
+  } else {
+    const meta = document.createElement("meta");
+    meta.name = "theme-color";
+    meta.content = isDark ? DARK_THEME_COLOR : LIGHT_THEME_COLOR;
+    document.head.appendChild(meta);
+  }
+}
+
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
   const isDark = theme === "dark" || (theme === "system" && getSystemTheme());
@@ -26,6 +41,8 @@ function applyTheme(theme: Theme) {
   } else {
     root.classList.remove("dark");
   }
+
+  updateThemeColor(isDark);
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

@@ -246,24 +246,21 @@ export const Reader = forwardRef<ReaderHandle, ReaderProps>(function Reader(
         const spine = book.spine;
 
         // Search through all spine items
-        await Promise.all(
-          spine.spineItems.map(
-            async (item: {
-              load: (
-                book: Book,
-              ) => Promise<{ find: (query: string) => { cfi: string; excerpt: string }[] }>;
-            }) => {
-              const doc = await item.load(book.load.bind(book));
-              const matches = doc.find(query);
-              matches.forEach((match: { cfi: string; excerpt: string }) => {
-                results.push({
-                  cfi: match.cfi,
-                  excerpt: match.excerpt,
-                });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const item of spine.spineItems as any[]) {
+          await item.load(book.load.bind(book));
+          const matches = item.find(query);
+          if (matches && matches.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            matches.forEach((match: any) => {
+              results.push({
+                cfi: match.cfi,
+                excerpt: match.excerpt,
               });
-            },
-          ),
-        );
+            });
+          }
+          item.unload();
+        }
 
         return results;
       },

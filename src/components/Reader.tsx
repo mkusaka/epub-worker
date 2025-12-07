@@ -314,11 +314,8 @@ export const Reader = forwardRef<ReaderHandle, ReaderProps>(function Reader(
     };
   }, []);
 
-  useEffect(() => {
-    if (initialLocation) {
-      setLocation(initialLocation);
-    }
-  }, [initialLocation, bookId]);
+  // Note: location is synced via key prop on Reader component (see App.tsx)
+  // When bookId changes, Reader remounts with fresh initialLocation
 
   useEffect(() => {
     if (!rendition) return;

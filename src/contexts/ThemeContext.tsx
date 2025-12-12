@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -14,7 +22,23 @@ const ThemeContext = createContext<ThemeContextType | null>(null);
 const THEME_KEY = "epub-theme";
 
 function getSystemTheme(): boolean {
+  if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+// Use useSyncExternalStore to reactively track system theme changes
+function subscribeToSystemTheme(callback: () => void) {
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  mediaQuery.addEventListener("change", callback);
+  return () => mediaQuery.removeEventListener("change", callback);
+}
+
+function useSystemDarkMode(): boolean {
+  return useSyncExternalStore(
+    subscribeToSystemTheme,
+    getSystemTheme,
+    () => false, // SSR fallback
+  );
 }
 
 const LIGHT_THEME_COLOR = "#ffffff";
@@ -32,9 +56,8 @@ function updateThemeColor(isDark: boolean) {
   }
 }
 
-function applyTheme(theme: Theme) {
+function applyThemeToDOM(isDark: boolean) {
   const root = document.documentElement;
-  const isDark = theme === "dark" || (theme === "system" && getSystemTheme());
 
   if (isDark) {
     root.classList.add("dark");
@@ -51,34 +74,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return (localStorage.getItem(THEME_KEY) as Theme) || "system";
   });
 
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const t = (localStorage.getItem(THEME_KEY) as Theme) || "system";
-    return t === "dark" || (t === "system" && getSystemTheme());
-  });
+  // Use useSyncExternalStore to track system theme reactively
+  const systemIsDark = useSystemDarkMode();
 
-  const updateIsDark = useCallback((t: Theme) => {
-    const dark = t === "dark" || (t === "system" && getSystemTheme());
-    setIsDark(dark);
-  }, []);
+  // Compute isDark as derived state (no useState needed)
+  const isDark = theme === "dark" || (theme === "system" && systemIsDark);
 
+  // Apply theme to DOM when isDark changes
   useEffect(() => {
-    applyTheme(theme);
-    updateIsDark(theme);
-  }, [theme, updateIsDark]);
-
-  useEffect(() => {
-    if (theme !== "system") return;
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => {
-      applyTheme("system");
-      updateIsDark("system");
-    };
-
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, [theme, updateIsDark]);
+    applyThemeToDOM(isDark);
+  }, [isDark]);
 
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);

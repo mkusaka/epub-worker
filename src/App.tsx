@@ -81,10 +81,11 @@ function LoadingFallback() {
   );
 }
 
-function ErrorFallback({ error }: { error: Error }) {
+function ErrorFallback({ error }: { error: unknown }) {
+  const message = error instanceof Error ? error.message : "An unexpected error occurred";
   return (
     <div className="flex items-center justify-center h-full text-muted-foreground">
-      <p>{error.message}</p>
+      <p>{message}</p>
     </div>
   );
 }

@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 pnpm dev          # Start development server
 pnpm build        # Type check and build for production
-pnpm lint         # Run ESLint
+pnpm lint         # Run oxlint
 pnpm deploy       # Build and deploy to Cloudflare Workers
 ```
 

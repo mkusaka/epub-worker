@@ -14,10 +14,7 @@
   },
   "overrides": [
     {
-      "files": [
-        "src/components/ui/**/*.{ts,tsx}",
-        "src/contexts/**/*.{ts,tsx}"
-      ],
+      "files": ["src/components/ui/**/*.{ts,tsx}", "src/contexts/**/*.{ts,tsx}"],
       "rules": {
         "react/only-export-components": "off"
       }

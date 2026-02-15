@@ -10,11 +10,12 @@
     <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
     <title>EPUB Reader</title>
     <script>
-      (function() {
-        var theme = localStorage.getItem('epub-theme');
-        var isDark = theme === 'dark' ||
-          (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        if (isDark) document.documentElement.classList.add('dark');
+      (function () {
+        var theme = localStorage.getItem("epub-theme");
+        var isDark =
+          theme === "dark" ||
+          (theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        if (isDark) document.documentElement.classList.add("dark");
       })();
     </script>
   </head>

@@ -35,15 +35,6 @@
     "tailwindcss": "^4.1.17",
     "use-debounce": "^10.0.6"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "core-js",
-      "es5-ext",
-      "esbuild",
-      "sharp",
-      "workerd"
-    ]
-  },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.27.0",
     "@rolldown/plugin-babel": "^0.2.2",

@@ -51,5 +51,5 @@
     "vite-plugin-pwa": "2.0.0",
     "wrangler": "4.72.0"
   },
-  "packageManager": "pnpm@12.13.0"
+  "packageManager": "pnpm@12.14.0"
 }

@@ -29,7 +29,7 @@ jobs:
       - name: Download jactionlint
         env:
           # renovate: datasource=github-releases depName=jdx/jactionlint
-          JACTIONLINT_VERSION: v2.3.0
+          JACTIONLINT_VERSION: v2.4.0
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           archive="jactionlint_${JACTIONLINT_VERSION#v}_linux_amd64.tar.gz"
@@ -54,7 +54,7 @@ jobs:
       - name: Download ghalint
         env:
           # renovate: datasource=github-releases depName=suzuki-shunsuke/ghalint
-          GHALINT_VERSION: v1.5.6
+          GHALINT_VERSION: v1.6.0
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           archive="ghalint_${GHALINT_VERSION#v}_linux_amd64.tar.gz"
@@ -80,7 +80,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run zizmor security check
-        uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
+        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
         with:
           inputs: .github/workflows/
           min-severity: medium
@@ -97,20 +97,20 @@ jobs:
       pull-requests: write
     env:
       # renovate: datasource=github-releases depName=reviewdog/reviewdog
-      REVIEWDOG_VERSION: v0.21.0
+      REVIEWDOG_VERSION: v0.21.2
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           languages: actions
           queries: security-extended,security-and-quality
       - name: Perform CodeQL analysis
         id: analyze
-        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           category: /language:actions
           output: ../results
@@ -159,7 +159,7 @@ jobs:
       - name: Download pinact
         env:
           # renovate: datasource=github-releases depName=suzuki-shunsuke/pinact
-          PINACT_VERSION: v4.1.1
+          PINACT_VERSION: v5.0.2
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           archive="pinact_linux_amd64.tar.gz"
